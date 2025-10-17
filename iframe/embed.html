@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Upfrica assistant – iframe</title>
+<meta name="referrer" content="no-referrer" />
+<style>
+  html,body{height:100%;margin:0;background:transparent}
+</style>
+</head>
+<body>
+<script>
+/* Loader that always fetches the latest widget build from main using a SHA cache-buster. */
+(function(){
+  var OWNER="srikantoraj";
+  var REPO ="upfrica-assistant-widge";   // <-- repo name (no trailing “t”)
+  var FIXED="https://cdn.jsdelivr.net/gh/"+OWNER+"/"+REPO+"@main/dist/upfrica-assistant-widget.js";
+
+  // Read params passed to this iframe: ?apiKey=&endpoint=&brand=
+  var qs=new URLSearchParams(location.search);
+  var apiKey  = qs.get("apiKey")  || "";
+  var endpoint= qs.get("endpoint")|| "";
+  var brand   = qs.get("brand")   || "Upfrica assistant";
+
+  function inject(url){
+    var s=document.createElement("script");
+    s.src=url; s.defer=true;
+    if(apiKey)   s.setAttribute("data-api-key", apiKey);
+    if(endpoint) s.setAttribute("data-endpoint", endpoint);
+    if(brand)    s.setAttribute("data-brand", brand);
+    document.head.appendChild(s);
+  }
+
+  // Ask GitHub for latest commit SHA on main; use it to bust jsDelivr cache.
+  fetch("https://api.github.com/repos/"+OWNER+"/"+REPO+"/commits/main", {cache:"no-store"})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+    .then(function(j){ inject(FIXED+"?v="+(j && j.sha ? j.sha : Date.now())); })
+    .catch(function(){ inject(FIXED+"?v="+Date.now()); }); // fallback still fetches fresh file
+})();
+</script>
+</body>
+</html>
